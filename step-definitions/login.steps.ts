@@ -25,7 +25,7 @@ Then('I should be redirected to the dashboard', async function () {
 });
 
 Then('I should see an error message', async function () {
-  const errorMessage = await page.textContent('.oxd-alert-content');
-  expect(errorMessage).toContain('Invalid credentials'); // Directly in the assertion
+  const errorMessage = await page.textContent('.errornote');
+  expect(errorMessage).toContain('Please enter the correct username and password'); // Directly in the assertion
   await browser.close();
 });
