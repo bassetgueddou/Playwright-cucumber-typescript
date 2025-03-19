@@ -1,25 +1,30 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:16'
-            args '-u root:root'
-        }
-    }
-    
+    agent any
+
     stages {
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm ci'
+        stage('build and install') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.51.0-noble'
+                    args '-u root:root'
+                }
             }
-        }
-        stage('Run Tests') {
+
             steps {
-                sh 'npx cucumber-js --config cucumber.js'
-                stash name: 'allure-results', includes: 'allure-results/**'
+                script {
+
+                    sh 'npm ci'
+                    // def tagToUse = params.String_TAG ?: params.CHOICE_TAG
+                    // sh "npx cucumber-js --format json:reports/cucumber-report.json --tags '${params.CHOICE_TAG}'"
+                    // sh "npm run only '${params.CHOICE_TAG}'"
+                    sh 'npx cucumber-js --format json:reports/cucumber-report.json'
+                    stash name: 'allure-results', includes: 'allure-results/*'
+
+                }
             }
+
         }
     }
-    
     post {
         always {
             unstash 'allure-results'
@@ -27,11 +32,10 @@ pipeline {
                 allure([
                     includeProperties: false,
                     jdk: '',
+                    properties: [],
                     reportBuildPolicy: 'ALWAYS',
                     results: [[path: 'allure-results']]
                 ])
             }
-            archiveArtifacts artifacts: 'allure-results/**', fingerprint: true
         }
     }
-}
